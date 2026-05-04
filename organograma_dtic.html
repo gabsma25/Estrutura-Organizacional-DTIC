@@ -1,0 +1,258 @@
+
+<style>
+.ow{
+  padding:2rem 1.5rem 2.5rem;
+  overflow-x:auto;
+  min-width:fit-content;
+  background:#0F172A;
+  border-radius:16px;
+}
+.tree{display:flex;flex-direction:column;align-items:center}
+.vl{width:1.5px;background:rgba(148,163,184,.2);border-radius:1px}
+.br{display:flex;gap:10px;justify-content:center}
+.bc{display:flex;flex-direction:column;align-items:center;position:relative;padding-top:20px}
+.bc::before{content:'';position:absolute;top:0;height:1.5px;background:rgba(148,163,184,.2);left:0;right:0}
+.bc:first-child::before{left:50%}
+.bc:last-child::before{right:50%}
+.bc:only-child::before{display:none}
+.bc::after{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:1.5px;height:20px;background:rgba(148,163,184,.2)}
+.nd{
+  border-radius:10px;
+  border:1px solid;
+  padding:10px 14px;
+  text-align:center;
+  transition:border-color .15s,transform .15s;
+}
+.nd:hover{transform:translateY(-1px)}
+.nd .lb{font-size:11.5px;font-weight:500;line-height:1.45;white-space:normal}
+.nd .pp{font-size:10.5px;margin-top:5px;line-height:1.4}
+.nd .vg{font-size:10.5px;font-style:italic;margin-top:4px}
+.nd .pt{font-size:9.5px;margin-top:2px}
+
+.nd.dept{background:rgba(139,92,246,.13);border-color:rgba(167,139,250,.35)}
+.nd.dept .lb{color:#C4B5FD}
+.nd.dept .pp,.nd.dept .vg,.nd.dept .pt{color:rgba(196,181,253,.55)}
+
+.nd.div{background:rgba(59,130,246,.11);border-color:rgba(147,197,253,.3)}
+.nd.div .lb{color:#BFDBFE}
+.nd.div .pp,.nd.div .vg,.nd.div .pt{color:rgba(191,219,254,.5)}
+
+.nd.sec{background:rgba(245,158,11,.09);border-color:rgba(252,211,77,.28)}
+.nd.sec .lb{color:#FDE68A}
+.nd.sec .pp,.nd.sec .vg,.nd.sec .pt{color:rgba(253,230,138,.5)}
+
+.nd.ass{background:rgba(16,185,129,.1);border-color:rgba(110,231,183,.28)}
+.nd.ass .lb{color:#A7F3D0}
+.nd.ass .pp,.nd.ass .vg,.nd.ass .pt{color:rgba(167,243,208,.5)}
+
+.nd.ass-esp{background:rgba(236,72,153,.1);border-color:rgba(249,168,212,.32)}
+.nd.ass-esp .lb{color:#FBCFE8}
+.nd.ass-esp .pp,.nd.ass-esp .vg,.nd.ass-esp .pt{color:rgba(251,207,232,.5)}
+
+.nd:hover.dept{border-color:rgba(167,139,250,.65)}
+.nd:hover.div{border-color:rgba(147,197,253,.6)}
+.nd:hover.sec{border-color:rgba(252,211,77,.58)}
+.nd:hover.ass{border-color:rgba(110,231,183,.58)}
+.nd:hover.ass-esp{border-color:rgba(249,168,212,.65)}
+
+.grp-lbl{
+  font-size:9.5px;font-weight:500;letter-spacing:.08em;
+  color:rgba(148,163,184,.5);text-transform:uppercase;margin-bottom:4px;
+}
+.leg{
+  display:flex;gap:14px;flex-wrap:wrap;
+  margin-top:20px;padding-top:14px;
+  border-top:1px solid rgba(148,163,184,.12);
+}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px}
+.leg-dot{width:12px;height:12px;border-radius:6px;border:1px solid}
+</style>
+
+<div class="ow">
+<div class="tree">
+
+  <div class="nd dept" style="min-width:270px;max-width:310px">
+    <div class="lb">Departamento de Tecnologia da Informação e Comunicação</div>
+    <div class="vg">Diretor — Ricardo Nattrodt de Magalhães</div>
+  </div>
+
+  <div class="vl" style="height:22px"></div>
+  <div class="grp-lbl">Divisões</div>
+  <div class="br" style="align-items:flex-start">
+
+    <div class="bc">
+      <div class="tree">
+        <div class="nd div" style="min-width:158px;max-width:172px">
+          <div class="lb">Divisão de Infraestrutura e Segurança da Informação — DISI</div>
+          <div class="pp">William Fonseca Salvador</div>
+        </div>
+        <div class="vl" style="height:16px"></div>
+        <div class="br">
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Adm. de Infraestrutura de Redes — SAIR</div>
+              <div class="pp">Carlos Rossini Alencar Liberal</div>
+            </div>
+          </div>
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Proteção de Dados e Segurança Digital — SPDSD</div>
+              <div class="pp">Ronnei Ericson Rodrigues Correa</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc">
+      <div class="tree">
+        <div class="nd div" style="min-width:158px;max-width:172px">
+          <div class="lb">Divisão de Análise e Gestão de Banco de Dados — DAGBD</div>
+          <div class="vg">Chefe — vaga</div>
+        </div>
+        <div class="vl" style="height:16px"></div>
+        <div class="br">
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Análise e Adm. de Banco de Dados — SAABD</div>
+              <div class="pp">Felipe Araújo Nunes de Lima</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc">
+      <div class="tree">
+        <div class="nd div" style="min-width:158px;max-width:172px">
+          <div class="lb">Divisão de Governança e Gestão de Projetos de TI — DGGP</div>
+          <div class="vg">Francisco Leonardo Bezerra Rocha</div>
+        </div>
+        <div class="vl" style="height:16px"></div>
+        <div class="br">
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Projetos e Contratações de TI — SPCT</div>
+              <div class="pp">Jarliani Feitoza de Brito</div>
+            </div>
+          </div>
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Gestão de Ativos de TI — SGAT</div>
+              <div class="pp">Leonardo Mendonça Castelo Branco</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc">
+      <div class="tree">
+        <div class="nd div" style="min-width:158px;max-width:172px">
+          <div class="lb">Divisão de Manutenção e Suporte Tecnológico — DMST</div>
+          <div class="pp">Demetrio Martins da Silva Neto</div>
+        </div>
+        <div class="vl" style="height:16px"></div>
+        <div class="br">
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Atendimento ao Usuário — SAU</div>
+              <div class="pp">Marcelo Rodrigues Soares</div>
+            </div>
+          </div>
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Manutenção de Ativos de TI — SMAT</div>
+              <div class="pp">Denny Fabian dos Santos Pinho</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bc">
+      <div class="tree">
+        <div class="nd div" style="min-width:158px;max-width:172px">
+          <div class="lb">Divisão de Desenvolvimento e Gestão de Sistemas — DDGS</div>
+          <div class="pp">Giovanni de Paiva Nicoletti</div>
+        </div>
+        <div class="vl" style="height:16px"></div>
+        <div class="br">
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Desenvolvimento de Sistemas — SDS</div>
+              <div class="pp">Valdeir Sampaio Sapará Filho</div>
+            </div>
+          </div>
+          <div class="bc">
+            <div class="nd sec" style="min-width:130px;max-width:150px">
+              <div class="lb">Seção de Treinamento e Apoio de Sistemas — STAS</div>
+              <div class="vg">Chefe — vaga</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p>
+  <div class="grp-lbl">Assessores do Departamento</div>
+  <div class="br">
+    <div class="bc">
+      <div class="nd ass" style="min-width:168px;max-width:185px">
+        <div class="lb">Assessor de Tecnologia I</div>
+        <div class="pp">Marcus Vinicius Campos da Costa<br>Kennedy Rodrigues de Souza<br>Diego Damasceno Sarraff<br>Natércio Leite Dutra</div>
+      </div>
+    </div>
+    <div class="bc">
+      <div class="nd ass" style="min-width:168px;max-width:185px">
+        <div class="lb">Assessor de Tecnologia II</div>
+        <div class="pp">Joshua Kook Ho Pereira<br>Daniel Sousa de Araújo<br>Samuel Ribeiro Bezerra</div>
+      </div>
+    </div>
+    <div class="bc">
+      <div class="nd ass" style="min-width:168px;max-width:185px">
+        <div class="lb">Assessor de Tecnologia III</div>
+        <div class="pp">Larissa Carvalho Leite da Silva<br>Ana Júlia Vieira Pereira Andrade da Costa<br>Yvys Fabiano dos Santos e Araújo<br>Gabriel Albino da Silva<br>Letícia Emilly Carvalho Bezerra<br>Andrey Ponte Evangelista de Sousa<br>Vanessa Cristina dos Reis Brashe</div>
+      </div>
+    </div>
+    <div class="bc">
+      <div class="nd ass" style="min-width:150px;max-width:170px">
+        <div class="lb">Assessor Técnico de TI</div>
+        <div class="pp">Ana Karolina Maia Teodosio</div>
+      </div>
+    </div>
+    <div class="bc">
+      <div class="nd ass" style="min-width:168px;max-width:190px">
+        <div class="lb">Assessor Especial II</div>
+        <div class="pp">Gabriela Monteiro Alem</div>
+      </div>
+    </div>
+  </div>
+  </p>
+
+</div>
+
+<div class="leg">
+  <div class="leg-item">
+    <div class="leg-dot" style="background:rgba(139,92,246,.13);border-color:rgba(167,139,250,.35)"></div>
+    <span style="color:rgba(196,181,253,.7)">Departamento</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-dot" style="background:rgba(59,130,246,.11);border-color:rgba(147,197,253,.3)"></div>
+    <span style="color:rgba(191,219,254,.7)">Divisão</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-dot" style="background:rgba(245,158,11,.09);border-color:rgba(252,211,77,.28)"></div>
+    <span style="color:rgba(253,230,138,.7)">Seção</span>
+  </div>
+  <div class="leg-item">
+    <div class="leg-dot" style="background:rgba(16,185,129,.1);border-color:rgba(110,231,183,.28)"></div>
+    <span style="color:rgba(167,243,208,.7)">Assessoria</span>
+  </div>
+  <div class="leg-item">
+    <span style="color:rgba(148,163,184,.4);font-style:italic">Vaga = cargo sem titular</span>
+  </div>
+</div>
+</div>
