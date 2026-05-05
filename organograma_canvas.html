@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Organograma DTIC — Canvas</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#0F172A;font-family:system-ui,-apple-system,sans-serif}
+canvas{display:block;position:fixed;top:0;left:0;cursor:default}
+
+/* ── Panel ── */
+#panel{
+  position:fixed;top:16px;right:16px;width:272px;
+  background:rgba(10,18,32,.92);backdrop-filter:blur(14px);
+  border:1px solid rgba(148,163,184,.13);border-radius:14px;
+  overflow:hidden;z-index:100;color:#CBD5E1;
+  transition:width .2s ease;
+}
+#panel.collapsed{width:44px}
+#panel-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 13px;border-bottom:1px solid rgba(148,163,184,.09);
+  user-select:none;
+}
+#panel.collapsed #panel-header{justify-content:center;padding:11px 8px}
+#panel-title{font-size:13px;font-weight:600;color:#E2E8F0;white-space:nowrap}
+#panel.collapsed #panel-title{display:none}
+#panel-toggle{
+  width:26px;height:26px;display:flex;align-items:center;justify-content:center;
+  border-radius:6px;cursor:pointer;color:#64748B;flex-shrink:0;font-size:15px;
+  transition:background .15s,color .15s;
+}
+#panel-toggle:hover{background:rgba(148,163,184,.1);color:#E2E8F0}
+#panel-body{padding:13px;display:flex;flex-direction:column;gap:12px}
+#panel.collapsed #panel-body{display:none}
+
+.p-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(148,163,184,.5);margin-bottom:5px}
+.p-section{display:flex;flex-direction:column}
+.p-sep{height:1px;background:rgba(148,163,184,.07);margin:0 -13px}
+
+select{
+  flex:1;background:rgba(22,33,52,.9);border:1px solid rgba(148,163,184,.18);
+  border-radius:8px;color:#CBD5E1;padding:6px 10px;font-size:12px;
+  cursor:pointer;outline:none;
+}
+select:focus{border-color:rgba(148,163,184,.35)}
+
+.row{display:flex;gap:7px;align-items:center}
+.btn{
+  padding:5px 11px;border-radius:7px;border:1px solid rgba(148,163,184,.18);
+  background:rgba(22,33,52,.9);color:#CBD5E1;font-size:12px;cursor:pointer;
+  white-space:nowrap;transition:background .15s,border-color .15s;
+}
+.btn:hover{background:rgba(40,55,80,.9);border-color:rgba(148,163,184,.32)}
+.btn.danger{border-color:rgba(239,68,68,.28);color:#FCA5A5}
+.btn.danger:hover{background:rgba(239,68,68,.08)}
+.btn.full{width:100%;text-align:center}
+
+.lt-group{display:flex;gap:5px}
+.lt-btn{
+  flex:1;padding:5px 4px;border-radius:7px;border:1px solid rgba(148,163,184,.18);
+  background:rgba(22,33,52,.9);color:#64748B;font-size:11px;cursor:pointer;
+  text-align:center;transition:background .15s,border-color .15s,color .15s;
+}
+.lt-btn.active{background:rgba(99,102,241,.18);border-color:rgba(129,140,248,.45);color:#A5B4FC}
+.lt-btn:hover:not(.active){background:rgba(40,55,80,.9);color:#94A3B8}
+
+.typo-row{display:flex;align-items:center;gap:8px}
+.typo-row label{font-size:11px;color:#64748B;width:62px;flex-shrink:0}
+.typo-row input[type=range]{flex:1;accent-color:#818CF8;height:3px}
+.typo-val{font-size:11px;color:#CBD5E1;width:36px;text-align:right;flex-shrink:0}
+
+/* Theme editor */
+#theme-editor{display:none;margin-top:8px}
+#theme-editor.open{display:block}
+.te-type-label{font-size:10px;color:rgba(148,163,184,.45);margin:6px 0 3px;text-transform:uppercase;letter-spacing:.07em}
+.color-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.color-swatch{width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,.1);flex-shrink:0}
+.color-input{
+  flex:1;background:rgba(15,23,42,.7);border:1px solid rgba(148,163,184,.15);
+  border-radius:5px;color:#CBD5E1;padding:3px 7px;font-size:11px;font-family:monospace;outline:none;
+}
+.color-input:focus{border-color:rgba(148,163,184,.35)}
+.color-input.invalid{border-color:rgba(239,68,68,.5)}
+.color-label{font-size:10px;color:#475569;flex-shrink:0;width:38px;text-align:right}
+
+/* ── Modal ── */
+#modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;
+  display:none;align-items:center;justify-content:center;
+}
+#modal-overlay.open{display:flex}
+#modal{
+  background:#0F172A;border:1px solid rgba(148,163,184,.14);border-radius:16px;
+  padding:24px;max-width:380px;width:calc(100% - 40px);position:relative;
+  max-height:82vh;overflow-y:auto;
+}
+.modal-close{
+  position:absolute;top:14px;right:14px;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;border-radius:6px;
+  cursor:pointer;color:#475569;font-size:20px;line-height:1;
+  transition:background .15s,color .15s;
+}
+.modal-close:hover{background:rgba(148,163,184,.1);color:#CBD5E1}
+.m-badge{
+  display:inline-block;padding:2px 10px;border-radius:99px;
+  font-size:11px;font-weight:500;margin-bottom:10px;
+}
+.m-title{font-size:18px;font-weight:700;color:#E2E8F0;margin-bottom:3px}
+.m-sub{font-size:12px;color:#475569;margin-bottom:16px}
+.m-section{margin-bottom:12px}
+.m-slabel{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(148,163,184,.45);margin-bottom:5px}
+.m-person{font-size:13px;color:#CBD5E1;padding:3px 0;border-bottom:1px solid rgba(148,163,184,.06)}
+.m-person:last-child{border-bottom:none}
+.m-vaga{font-style:italic;color:#475569;font-size:12px}
+.m-conn{font-size:12px;color:#64748B;padding:2px 0}
+
+/* ── Legend ── */
+#legend{
+  position:fixed;bottom:16px;left:16px;
+  display:flex;gap:10px;flex-wrap:wrap;
+  background:rgba(10,18,32,.85);backdrop-filter:blur(8px);
+  border:1px solid rgba(148,163,184,.1);border-radius:10px;
+  padding:7px 13px;z-index:100;
+}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:rgba(148,163,184,.65)}
+.leg-dot{width:10px;height:10px;border-radius:5px;border:1px solid}
+
+/* ── Hints ── */
+#hints{
+  position:fixed;bottom:16px;right:16px;
+  font-size:10.5px;color:rgba(148,163,184,.35);
+  text-align:right;z-index:100;line-height:1.9;pointer-events:none;
+}
+</style>
+</head>
+<body>
+<canvas id="org-canvas"></canvas>
+
+<div id="panel">
+  <div id="panel-header">
+    <span id="panel-title">Organograma DTIC</span>
+    <div id="panel-toggle" title="Recolher / expandir">&#9776;</div>
+  </div>
+  <div id="panel-body">
+
+    <div class="p-section">
+      <div class="p-label">Tema</div>
+      <div class="row">
+        <select id="theme-select"></select>
+        <button class="btn" id="btn-dup" title="Duplicar tema">Dup.</button>
+        <button class="btn danger" id="btn-del" style="display:none" title="Excluir">Del</button>
+      </div>
+      <div id="theme-editor">
+        <div id="te-fields"></div>
+      </div>
+    </div>
+
+    <div class="p-sep"></div>
+
+    <div class="p-section">
+      <div class="p-label">Tipo de Linha</div>
+      <div class="lt-group">
+        <button class="lt-btn" data-lt="straight">Reta</button>
+        <button class="lt-btn" data-lt="bezier">Bézier</button>
+        <button class="lt-btn" data-lt="orthogonal">Ortogonal</button>
+      </div>
+    </div>
+
+    <div class="p-sep"></div>
+
+    <div class="p-section">
+      <div class="p-label">Tipografia</div>
+      <div class="typo-row">
+        <label>Setor</label>
+        <input type="range" id="sz-sector" min="8" max="20" step="0.5">
+        <span class="typo-val" id="val-sector">12px</span>
+      </div>
+      <div class="typo-row" style="margin-top:5px">
+        <label>Servidor</label>
+        <input type="range" id="sz-server" min="7" max="17" step="0.5">
+        <span class="typo-val" id="val-server">10.5px</span>
+      </div>
+    </div>
+
+    <div class="p-sep"></div>
+
+    <button class="btn full" id="btn-reset">Resetar Posições</button>
+
+  </div>
+</div>
+
+<div id="modal-overlay">
+  <div id="modal">
+    <div class="modal-close" id="modal-close">&times;</div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="leg-item"><div class="leg-dot" id="ld-dept"></div>Departamento</div>
+  <div class="leg-item"><div class="leg-dot" id="ld-div"></div>Divisão</div>
+  <div class="leg-item"><div class="leg-dot" id="ld-sec"></div>Seção</div>
+  <div class="leg-item"><div class="leg-dot" id="ld-ass"></div>Assessoria</div>
+  <div class="leg-item"><div class="leg-dot" id="ld-asse"></div>A. Especial</div>
+  <div class="leg-item" style="margin-left:4px"><em style="color:rgba(148,163,184,.35)">Vaga = cargo sem titular</em></div>
+</div>
+
+<div id="hints">
+  Arrastar nó: mover &nbsp;·&nbsp; Arrastar fundo: pan &nbsp;·&nbsp; Roda: zoom<br>
+  Clique esq.: selecionar &nbsp;·&nbsp; Clique dir.: detalhes
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════
+const NODE_DATA = [
+  { id:'dtic',  type:'dept',    acronym:'DTIC',   label:'Departamento de Tecnologia da Informação e Comunicação', chief:'Ricardo Nattrodt de Magalhães', colleagues:[] },
+  { id:'disi',  type:'div',     acronym:'DISI',   label:'Divisão de Infraestrutura e Segurança da Informação',   chief:'William Fonseca Salvador',              colleagues:[] },
+  { id:'dagbd', type:'div',     acronym:'DAGBD',  label:'Divisão de Análise e Gestão de Banco de Dados',         chief:'VAGA',                                  colleagues:[] },
+  { id:'dggp',  type:'div',     acronym:'DGGP',   label:'Divisão de Governança e Gestão de Projetos de TI',      chief:'Francisco Leonardo Bezerra Rocha',       colleagues:[] },
+  { id:'dmst',  type:'div',     acronym:'DMST',   label:'Divisão de Manutenção e Suporte Tecnológico',           chief:'Demetrio Martins da Silva Neto',         colleagues:[] },
+  { id:'ddgs',  type:'div',     acronym:'DDGS',   label:'Divisão de Desenvolvimento e Gestão de Sistemas',       chief:'Giovanni de Paiva Nicoletti',            colleagues:[] },
+  { id:'sair',  type:'sec',     acronym:'SAIR',   label:'Seção de Adm. de Infraestrutura de Redes',              chief:'Carlos Rossini Alencar Liberal',         colleagues:[] },
+  { id:'spdsd', type:'sec',     acronym:'SPDSD',  label:'Seção de Proteção de Dados e Segurança Digital',        chief:'Ronnei Ericson Rodrigues Correa',        colleagues:[] },
+  { id:'saabd', type:'sec',     acronym:'SAABD',  label:'Seção de Análise e Adm. de Banco de Dados',             chief:'Felipe Araújo Nunes de Lima',            colleagues:[] },
+  { id:'spct',  type:'sec',     acronym:'SPCT',   label:'Seção de Projetos e Contratações de TI',                chief:'Jarliani Feitoza de Brito',              colleagues:[] },
+  { id:'sgat',  type:'sec',     acronym:'SGAT',   label:'Seção de Gestão de Ativos de TI',                       chief:'Leonardo Mendonça Castelo Branco',       colleagues:[] },
+  { id:'sau',   type:'sec',     acronym:'SAU',    label:'Seção de Atendimento ao Usuário',                       chief:'Marcelo Rodrigues Soares',               colleagues:[] },
+  { id:'smat',  type:'sec',     acronym:'SMAT',   label:'Seção de Manutenção de Ativos de TI',                   chief:'Denny Fabian dos Santos Pinho',          colleagues:[] },
+  { id:'sds',   type:'sec',     acronym:'SDS',    label:'Seção de Desenvolvimento de Sistemas',                  chief:'Valdeir Sampaio Sapará Filho',           colleagues:[] },
+  { id:'stas',  type:'sec',     acronym:'STAS',   label:'Seção de Treinamento e Apoio de Sistemas',              chief:'VAGA',                                  colleagues:[] },
+  { id:'ass1',  type:'ass',     acronym:'AT-I',   label:'Assessor de Tecnologia I',   chief:null, colleagues:['Marcus Vinicius Campos da Costa','Kennedy Rodrigues de Souza','Diego Damasceno Sarraff','Natércio Leite Dutra'] },
+  { id:'ass2',  type:'ass',     acronym:'AT-II',  label:'Assessor de Tecnologia II',  chief:null, colleagues:['Joshua Kook Ho Pereira','Daniel Sousa de Araújo','Samuel Ribeiro Bezerra'] },
+  { id:'ass3',  type:'ass',     acronym:'AT-III', label:'Assessor de Tecnologia III', chief:null, colleagues:['Larissa Carvalho Leite da Silva','Ana Júlia Vieira Pereira Andrade da Costa','Yvys Fabiano dos Santos e Araújo','Gabriel Albino da Silva','Letícia Emilly Carvalho Bezerra','Andrey Ponte Evangelista de Sousa','Vanessa Cristina dos Reis Brashe'] },
+  { id:'asst',  type:'ass',     acronym:'AT-TI',  label:'Assessor Técnico de TI',     chief:'Ana Karolina Maia Teodosio', colleagues:[] },
+  { id:'asse',  type:'ass-esp', acronym:'AE-II',  label:'Assessor Especial II',        chief:'Gabriela Monteiro Alem',     colleagues:[] },
+];
+
+const EDGE_DATA = [
+  {from:'dtic',to:'disi'},{from:'dtic',to:'dagbd'},{from:'dtic',to:'dggp'},
+  {from:'dtic',to:'dmst'},{from:'dtic',to:'ddgs'},
+  {from:'dtic',to:'ass1'},{from:'dtic',to:'ass2'},{from:'dtic',to:'ass3'},
+  {from:'dtic',to:'asst'},{from:'dtic',to:'asse'},
+  {from:'disi',to:'sair'},{from:'disi',to:'spdsd'},
+  {from:'dagbd',to:'saabd'},
+  {from:'dggp',to:'spct'},{from:'dggp',to:'sgat'},
+  {from:'dmst',to:'sau'},{from:'dmst',to:'smat'},
+  {from:'ddgs',to:'sds'},{from:'ddgs',to:'stas'},
+];
+
+// ══════════════════════════════════════════════════════════════════
+// THEMES
+// ══════════════════════════════════════════════════════════════════
+const BUILTIN_THEMES = [
+  {
+    id:'dark', name:'Dark', isBuiltIn:true,
+    background:'#0F172A', lineColor:'rgba(148,163,184,.22)', selectedOutline:'#818CF8',
+    nodeTypes:{
+      dept:    {bg:'rgba(139,92,246,.13)',  border:'rgba(167,139,250,.35)', hoverBorder:'rgba(167,139,250,.7)',  text:'#C4B5FD', subText:'rgba(196,181,253,.55)'},
+      div:     {bg:'rgba(59,130,246,.11)',  border:'rgba(147,197,253,.3)',  hoverBorder:'rgba(147,197,253,.65)', text:'#BFDBFE', subText:'rgba(191,219,254,.5)'},
+      sec:     {bg:'rgba(245,158,11,.09)',  border:'rgba(252,211,77,.28)',  hoverBorder:'rgba(252,211,77,.62)',  text:'#FDE68A', subText:'rgba(253,230,138,.5)'},
+      ass:     {bg:'rgba(16,185,129,.1)',   border:'rgba(110,231,183,.28)', hoverBorder:'rgba(110,231,183,.62)', text:'#A7F3D0', subText:'rgba(167,243,208,.5)'},
+      'ass-esp':{bg:'rgba(236,72,153,.1)', border:'rgba(249,168,212,.32)', hoverBorder:'rgba(249,168,212,.68)', text:'#FBCFE8', subText:'rgba(251,207,232,.5)'},
+    }
+  },
+  {
+    id:'light', name:'Light', isBuiltIn:true,
+    background:'#F1F5F9', lineColor:'rgba(100,116,139,.3)', selectedOutline:'#6366F1',
+    nodeTypes:{
+      dept:    {bg:'#EDE9FE', border:'#A78BFA', hoverBorder:'#7C3AED', text:'#3B0764', subText:'#5B21B6'},
+      div:     {bg:'#DBEAFE', border:'#93C5FD', hoverBorder:'#3B82F6', text:'#1E3A5F', subText:'#1D4ED8'},
+      sec:     {bg:'#FEF3C7', border:'#FCD34D', hoverBorder:'#D97706', text:'#451A03', subText:'#92400E'},
+      ass:     {bg:'#D1FAE5', border:'#6EE7B7', hoverBorder:'#059669', text:'#022C22', subText:'#065F46'},
+      'ass-esp':{bg:'#FCE7F3',border:'#F9A8D4', hoverBorder:'#DB2777', text:'#500724', subText:'#9D174D'},
+    }
+  },
+  {
+    id:'corporate', name:'Corporate', isBuiltIn:true,
+    background:'#0D1B2A', lineColor:'rgba(100,160,220,.2)', selectedOutline:'#38BDF8',
+    nodeTypes:{
+      dept:    {bg:'rgba(14,165,233,.15)',  border:'rgba(56,189,248,.35)', hoverBorder:'rgba(56,189,248,.7)',  text:'#BAE6FD', subText:'rgba(186,230,253,.55)'},
+      div:     {bg:'rgba(99,102,241,.12)',  border:'rgba(165,180,252,.3)', hoverBorder:'rgba(165,180,252,.65)',text:'#C7D2FE', subText:'rgba(199,210,254,.5)'},
+      sec:     {bg:'rgba(6,182,212,.1)',    border:'rgba(103,232,249,.25)',hoverBorder:'rgba(103,232,249,.6)', text:'#CFFAFE', subText:'rgba(207,250,254,.5)'},
+      ass:     {bg:'rgba(234,179,8,.1)',    border:'rgba(253,224,71,.28)', hoverBorder:'rgba(253,224,71,.6)',  text:'#FEF08A', subText:'rgba(254,240,138,.5)'},
+      'ass-esp':{bg:'rgba(249,115,22,.1)', border:'rgba(253,186,116,.28)',hoverBorder:'rgba(253,186,116,.65)',text:'#FED7AA', subText:'rgba(254,215,170,.5)'},
+    }
+  },
+  {
+    id:'nature', name:'Nature', isBuiltIn:true,
+    background:'#0D1A0F', lineColor:'rgba(134,192,104,.2)', selectedOutline:'#86C068',
+    nodeTypes:{
+      dept:    {bg:'rgba(22,163,74,.15)',  border:'rgba(74,222,128,.35)', hoverBorder:'rgba(74,222,128,.7)',  text:'#BBF7D0', subText:'rgba(187,247,208,.55)'},
+      div:     {bg:'rgba(132,204,22,.1)',  border:'rgba(190,242,100,.3)', hoverBorder:'rgba(190,242,100,.65)',text:'#D9F99D', subText:'rgba(217,249,157,.5)'},
+      sec:     {bg:'rgba(234,179,8,.09)', border:'rgba(253,224,71,.28)', hoverBorder:'rgba(253,224,71,.62)', text:'#FEF08A', subText:'rgba(254,240,138,.5)'},
+      ass:     {bg:'rgba(20,184,166,.1)',  border:'rgba(94,234,212,.28)', hoverBorder:'rgba(94,234,212,.62)', text:'#CCFBF1', subText:'rgba(204,251,241,.5)'},
+      'ass-esp':{bg:'rgba(236,72,153,.1)',border:'rgba(249,168,212,.32)',hoverBorder:'rgba(249,168,212,.68)',text:'#FBCFE8', subText:'rgba(251,207,232,.5)'},
+    }
+  },
+];
+
+// ══════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════════
+const NODE_W   = 170;
+const PAD_X    = 14;
+const PAD_Y    = 12;
+const CORNER   = 10;
+const HGAP     = 24;
+const VGAP     = 88;
+
+// ══════════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════════
+let nodes       = NODE_DATA.map(d => ({...d, x:0, y:0, w:NODE_W, h:80}));
+let selectedId  = null;
+let hoveredId   = null;
+let dragging    = null;   // {id, ox, oy, nx, ny}
+let pan         = {x:0, y:0};
+let zoom        = 1;
+let isPanning   = false;
+let panStart    = {x:0, y:0};
+let panOrigin   = {x:0, y:0};
+let lineType    = 'orthogonal';
+let themeId     = 'dark';
+let customThemes = [];
+let typo        = {sector:12, server:10.5};
+
+// ══════════════════════════════════════════════════════════════════
+// CANVAS
+// ══════════════════════════════════════════════════════════════════
+const canvas = document.getElementById('org-canvas');
+const ctx    = canvas.getContext('2d');
+
+// ══════════════════════════════════════════════════════════════════
+// THEME HELPERS
+// ══════════════════════════════════════════════════════════════════
+function allThemes(){ return [...BUILTIN_THEMES, ...customThemes]; }
+function getTheme() { return allThemes().find(t => t.id === themeId) || BUILTIN_THEMES[0]; }
+
+// ══════════════════════════════════════════════════════════════════
+// TEXT HELPERS
+// ══════════════════════════════════════════════════════════════════
+function setFont(size, weight='400', style=''){
+  ctx.font = `${style}${style?' ':''}${weight} ${size}px system-ui,sans-serif`;
+}
+
+function wrapText(text, maxW, size, weight='400'){
+  setFont(size, weight);
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for(const w of words){
+    const test = line ? line+' '+w : w;
+    if(ctx.measureText(test).width > maxW && line){
+      lines.push(line); line = w;
+    } else { line = test; }
+  }
+  if(line) lines.push(line);
+  return lines;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LAYOUT
+// ══════════════════════════════════════════════════════════════════
+function calcHeight(node){
+  const sH = typo.sector * 1.55;
+  const pH = typo.server * 1.5;
+  const tw = NODE_W - PAD_X * 2;
+  let h = PAD_Y;
+  h += sH;                              // acronym
+  h += 3;
+  h += wrapText(node.label, tw, typo.sector, '500').length * sH;
+  h += 6;
+  if(node.chief && node.chief !== '') h += pH;
+  h += node.colleagues.length * pH;
+  h += PAD_Y;
+  return Math.max(h, 60);
+}
+
+function subtreeW(id){
+  const kids = EDGE_DATA.filter(e => e.from === id).map(e => e.to);
+  if(!kids.length) return NODE_W;
+  return kids.reduce((s,k) => s + subtreeW(k), 0) + (kids.length-1)*HGAP;
+}
+
+function placeNode(id, cx, y){
+  const node = nodes.find(n => n.id === id);
+  node.h = calcHeight(node);
+  node.x = cx; node.y = y;
+  const kids = EDGE_DATA.filter(e => e.from === id).map(e => e.to);
+  if(!kids.length) return;
+  const totalW = kids.reduce((s,k) => s+subtreeW(k), 0) + (kids.length-1)*HGAP;
+  let curX = cx - totalW/2;
+  const childY = y + node.h + VGAP;
+  for(const kid of kids){
+    const sw = subtreeW(kid);
+    placeNode(kid, curX + sw/2, childY);
+    curX += sw + HGAP;
+  }
+}
+
+function computeLayout(){
+  placeNode('dtic', 0, 0);
+}
+
+function fitToScreen(){
+  let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+  for(const n of nodes){
+    x0 = Math.min(x0, n.x - n.w/2);
+    x1 = Math.max(x1, n.x + n.w/2);
+    y0 = Math.min(y0, n.y);
+    y1 = Math.max(y1, n.y + n.h);
+  }
+  const pad = 70;
+  const zx = (canvas.width  - pad*2) / (x1-x0);
+  const zy = (canvas.height - pad*2) / (y1-y0);
+  zoom = Math.min(zx, zy, 1.1);
+  pan.x = -((x0+x1)/2) * zoom;
+  pan.y = -((y0+y1)/2) * zoom;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// COORDINATE HELPERS
+// ══════════════════════════════════════════════════════════════════
+function s2w(sx, sy){
+  return {
+    x: (sx - canvas.width/2  - pan.x) / zoom,
+    y: (sy - canvas.height/2 - pan.y) / zoom,
+  };
+}
+
+function hitNode(sx, sy){
+  const {x,y} = s2w(sx, sy);
+  for(let i = nodes.length-1; i >= 0; i--){
+    const n = nodes[i];
+    if(x >= n.x-n.w/2 && x <= n.x+n.w/2 && y >= n.y && y <= n.y+n.h) return n;
+  }
+  return null;
+}
+
+function ptSegDist(px,py,ax,ay,bx,by){
+  const dx=bx-ax, dy=by-ay, len2=dx*dx+dy*dy;
+  if(!len2) return Math.hypot(px-ax,py-ay);
+  const t = Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
+  return Math.hypot(px-(ax+t*dx), py-(ay+t*dy));
+}
+
+function hitEdge(sx, sy){
+  const {x,y} = s2w(sx, sy);
+  const thr = 7/zoom;
+  for(const e of EDGE_DATA){
+    const src = nodes.find(n=>n.id===e.from);
+    const dst = nodes.find(n=>n.id===e.to);
+    if(!src||!dst) continue;
+    const segs = edgeSegs(src,dst);
+    for(let i=0;i<segs.length-1;i++){
+      if(ptSegDist(x,y,segs[i].x,segs[i].y,segs[i+1].x,segs[i+1].y)<thr) return e;
+    }
+  }
+  return null;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EDGE GEOMETRY
+// ══════════════════════════════════════════════════════════════════
+function edgeSegs(src, dst){
+  const sx=src.x, sy=src.y+src.h, dx=dst.x, dy=dst.y;
+  if(lineType==='straight') return [{x:sx,y:sy},{x:dx,y:dy}];
+  const my=(sy+dy)/2;
+  return [{x:sx,y:sy},{x:sx,y:my},{x:dx,y:my},{x:dx,y:dy}];
+}
+
+// ══════════════════════════════════════════════════════════════════
+// DRAWING
+// ══════════════════════════════════════════════════════════════════
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function drawEdges(){
+  const theme = getTheme();
+  ctx.lineWidth = 1.5/zoom;
+  for(const e of EDGE_DATA){
+    const src = nodes.find(n=>n.id===e.from);
+    const dst = nodes.find(n=>n.id===e.to);
+    if(!src||!dst) continue;
+    ctx.strokeStyle = theme.lineColor;
+    if(lineType==='bezier'){
+      const sx=src.x, sy=src.y+src.h, dx=dst.x, dy=dst.y, my=(sy+dy)/2;
+      ctx.beginPath();
+      ctx.moveTo(sx,sy);
+      ctx.bezierCurveTo(sx,my,dx,my,dx,dy);
+      ctx.stroke();
+    } else {
+      const segs = edgeSegs(src,dst);
+      ctx.beginPath();
+      ctx.moveTo(segs[0].x,segs[0].y);
+      for(let i=1;i<segs.length;i++) ctx.lineTo(segs[i].x,segs[i].y);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawNode(node){
+  ctx.save();
+  const theme = getTheme();
+  const nt = theme.nodeTypes[node.type] || theme.nodeTypes.dept;
+  const sel = node.id === selectedId;
+  const hov = node.id === hoveredId;
+  const nx = node.x - node.w/2, ny = node.y;
+  const nw = node.w, nh = node.h;
+
+  // Shadow when selected
+  if(sel){ ctx.shadowColor = theme.selectedOutline; ctx.shadowBlur = 18/zoom; }
+
+  // Fill
+  ctx.fillStyle = nt.bg;
+  roundRect(nx,ny,nw,nh,CORNER);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Border
+  ctx.strokeStyle = sel ? theme.selectedOutline : hov ? nt.hoverBorder : nt.border;
+  ctx.lineWidth   = sel ? 2.5/zoom : 1.5/zoom;
+  roundRect(nx,ny,nw,nh,CORNER);
+  ctx.stroke();
+
+  // ── Text ──
+  const tw = nw - PAD_X*2;
+  const sH = typo.sector * 1.55;
+  const pH = typo.server  * 1.5;
+  let ty = ny + PAD_Y;
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'top';
+
+  // Acronym
+  ctx.fillStyle = nt.text;
+  setFont(typo.sector + 1, '700');
+  ctx.fillText(node.acronym, node.x, ty);
+  ty += sH + 3;
+
+  // Label
+  ctx.fillStyle = nt.text;
+  const labelLines = wrapText(node.label, tw, typo.sector, '500');
+  setFont(typo.sector, '500');
+  for(const line of labelLines){ ctx.fillText(line, node.x, ty); ty += sH; }
+  ty += 6;
+
+  // Chief / colleagues
+  if(node.chief){
+    if(node.chief === 'VAGA'){
+      ctx.fillStyle = 'rgba(148,163,184,.38)';
+      setFont(typo.server, '400', 'italic');
+      ctx.fillText('Chefe — vaga', node.x, ty);
+    } else {
+      ctx.fillStyle = nt.subText;
+      setFont(typo.server, '400');
+      ctx.fillText(node.chief, node.x, ty);
+    }
+    ty += pH;
+  }
+  ctx.fillStyle = nt.subText;
+  setFont(typo.server, '400');
+  for(const c of node.colleagues){ ctx.fillText(c, node.x, ty); ty += pH; }
+
+  ctx.restore();
+}
+
+function render(){
+  const theme = getTheme();
+  ctx.fillStyle = theme.background;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(canvas.width/2 + pan.x, canvas.height/2 + pan.y);
+  ctx.scale(zoom, zoom);
+
+  drawEdges();
+  for(const n of nodes) drawNode(n);
+
+  ctx.restore();
+  syncLegend();
+}
+
+function syncLegend(){
+  const theme = getTheme();
+  const map = {dept:'ld-dept', div:'ld-div', sec:'ld-sec', ass:'ld-ass', 'ass-esp':'ld-asse'};
+  for(const [t,id] of Object.entries(map)){
+    const el = document.getElementById(id);
+    const nt = theme.nodeTypes[t];
+    if(el&&nt){ el.style.background = nt.bg; el.style.borderColor = nt.border; }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════════════
+canvas.addEventListener('mousedown', e => {
+  if(e.button === 2) return;
+  const hit = hitNode(e.clientX, e.clientY);
+  if(hit){
+    selectedId = hit.id;
+    dragging = {id:hit.id, ox:e.clientX, oy:e.clientY, nx:hit.x, ny:hit.y};
+    canvas.style.cursor = 'grabbing';
+  } else {
+    selectedId = null;
+    isPanning  = true;
+    panStart   = {x:e.clientX, y:e.clientY};
+    panOrigin  = {x:pan.x, y:pan.y};
+    canvas.style.cursor = 'grabbing';
+  }
+  render();
+});
+
+canvas.addEventListener('mousemove', e => {
+  if(dragging){
+    const node = nodes.find(n => n.id === dragging.id);
+    node.x = dragging.nx + (e.clientX - dragging.ox)/zoom;
+    node.y = dragging.ny + (e.clientY - dragging.oy)/zoom;
+    render(); return;
+  }
+  if(isPanning){
+    pan.x = panOrigin.x + (e.clientX - panStart.x);
+    pan.y = panOrigin.y + (e.clientY - panStart.y);
+    render(); return;
+  }
+  const hit = hitNode(e.clientX, e.clientY);
+  const nid = hit ? hit.id : null;
+  if(nid !== hoveredId){ hoveredId = nid; render(); }
+  canvas.style.cursor = hit ? 'grab' : 'default';
+});
+
+canvas.addEventListener('mouseup', () => {
+  if(dragging) savePositions();
+  dragging = null; isPanning = false;
+  canvas.style.cursor = hoveredId ? 'grab' : 'default';
+});
+
+canvas.addEventListener('mouseleave', () => {
+  dragging = null; isPanning = false;
+  if(hoveredId){ hoveredId = null; render(); }
+});
+
+canvas.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  const hit = hitNode(e.clientX, e.clientY);
+  if(hit) openModal(hit);
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const f = e.deltaY > 0 ? 0.88 : 1.14;
+  const mx = e.clientX - canvas.width/2;
+  const my = e.clientY - canvas.height/2;
+  pan.x = mx - (mx - pan.x)*f;
+  pan.y = my - (my - pan.y)*f;
+  zoom  = Math.max(0.1, Math.min(4, zoom*f));
+  render();
+}, {passive:false});
+
+window.addEventListener('resize', () => {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  render();
+});
+
+// ══════════════════════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════════════════════
+const TYPE_LABELS = {dept:'Departamento', div:'Divisão', sec:'Seção', ass:'Assessoria', 'ass-esp':'Assessoria Especial'};
+
+function openModal(node){
+  const theme = getTheme();
+  const nt    = theme.nodeTypes[node.type] || theme.nodeTypes.dept;
+  const par   = EDGE_DATA.find(e => e.to === node.id);
+  const parN  = par ? NODE_DATA.find(n => n.id === par.from) : null;
+  const childs = EDGE_DATA.filter(e => e.from === node.id).map(e => NODE_DATA.find(n => n.id === e.to));
+
+  let h = `
+    <span class="m-badge" style="background:${nt.bg};border:1px solid ${nt.border};color:${nt.text}">${TYPE_LABELS[node.type]||node.type}</span>
+    <div class="m-title">${node.acronym}</div>
+    <div class="m-sub">${node.label}</div>`;
+
+  if(node.chief || node.colleagues.length){
+    h += `<div class="m-section"><div class="m-slabel">Titular / Membros</div>`;
+    if(node.chief === 'VAGA')     h += `<div class="m-person m-vaga">Cargo sem titular (vaga)</div>`;
+    else if(node.chief)           h += `<div class="m-person">${node.chief}</div>`;
+    for(const c of node.colleagues) h += `<div class="m-person">${c}</div>`;
+    h += `</div>`;
+  }
+
+  if(parN){
+    h += `<div class="m-section"><div class="m-slabel">Subordinado a</div>
+      <div class="m-conn">${parN.acronym} — ${parN.label}</div></div>`;
+  }
+
+  if(childs.length){
+    h += `<div class="m-section"><div class="m-slabel">Unidades Subordinadas</div>`;
+    for(const c of childs) h += `<div class="m-conn">${c.acronym} — ${c.label}</div>`;
+    h += `</div>`;
+  }
+
+  document.getElementById('modal-content').innerHTML = h;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+document.getElementById('modal-close').addEventListener('click', closeModal);
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-overlay')) closeModal();
+});
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════════════════
+function savePositions(){
+  const pos = {};
+  for(const n of nodes) pos[n.id] = {x:n.x, y:n.y};
+  localStorage.setItem('dtic_pos', JSON.stringify(pos));
+}
+
+function loadPositions(){
+  try{
+    const raw = localStorage.getItem('dtic_pos');
+    if(!raw) return false;
+    const pos = JSON.parse(raw);
+    for(const n of nodes) if(pos[n.id]){ n.x = pos[n.id].x; n.y = pos[n.id].y; }
+    return true;
+  } catch{ return false; }
+}
+
+function saveSettings(){
+  localStorage.setItem('dtic_cfg', JSON.stringify({lineType, themeId, typo}));
+}
+
+function loadSettings(){
+  try{
+    const raw = localStorage.getItem('dtic_cfg');
+    if(!raw) return;
+    const s = JSON.parse(raw);
+    if(s.lineType) lineType = s.lineType;
+    if(s.themeId)  themeId  = s.themeId;
+    if(s.typo)     typo     = {...typo, ...s.typo};
+  } catch{}
+}
+
+function saveCustom(){ localStorage.setItem('dtic_custom', JSON.stringify(customThemes)); }
+
+function loadCustom(){
+  try{
+    const raw = localStorage.getItem('dtic_custom');
+    if(raw) customThemes = JSON.parse(raw);
+  } catch{}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PANEL UI
+// ══════════════════════════════════════════════════════════════════
+function buildThemeSelect(){
+  const sel = document.getElementById('theme-select');
+  sel.innerHTML = '';
+  for(const t of allThemes()){
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.name + (t.isBuiltIn ? '' : ' ✎');
+    if(t.id === themeId) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  const cur = getTheme();
+  document.getElementById('btn-del').style.display = cur.isBuiltIn ? 'none' : '';
+  buildThemeEditor(cur);
+}
+
+// Color editor for custom themes
+function isColor(s){
+  const el = document.createElement('div');
+  el.style.color = s; return el.style.color !== '';
+}
+
+function buildThemeEditor(theme){
+  const ed = document.getElementById('theme-editor');
+  const fs = document.getElementById('te-fields');
+  fs.innerHTML = '';
+  if(theme.isBuiltIn){ ed.classList.remove('open'); return; }
+  ed.classList.add('open');
+
+  const addRow = (label, getter, setter) => {
+    const row = document.createElement('div');
+    row.className = 'color-row';
+    const swatch = document.createElement('div');
+    swatch.className = 'color-swatch';
+    swatch.style.background = getter();
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'color-input';
+    input.value = getter();
+    const lbl = document.createElement('span');
+    lbl.className = 'color-label';
+    lbl.textContent = label;
+    input.addEventListener('input', () => {
+      const v = input.value.trim();
+      if(isColor(v)){
+        input.classList.remove('invalid');
+        swatch.style.background = v;
+        setter(v); saveCustom(); render();
+      } else { input.classList.add('invalid'); }
+    });
+    row.appendChild(swatch); row.appendChild(input); row.appendChild(lbl);
+    fs.appendChild(row);
+  };
+
+  addRow('Fundo',   () => theme.background,      v => theme.background      = v);
+  addRow('Linhas',  () => theme.lineColor,        v => theme.lineColor        = v);
+  addRow('Seleção', () => theme.selectedOutline,  v => theme.selectedOutline  = v);
+
+  const tnames = {dept:'Depto',div:'Div.',sec:'Seção',ass:'Ass.','ass-esp':'A.Esp'};
+  for(const [t,tn] of Object.entries(tnames)){
+    const lbl = document.createElement('div');
+    lbl.className = 'te-type-label'; lbl.textContent = tn;
+    fs.appendChild(lbl);
+    const nt = theme.nodeTypes[t];
+    addRow('bg',  () => nt.bg,     v => { nt.bg    = v; });
+    addRow('brd', () => nt.border, v => { nt.border = v; nt.hoverBorder = v; });
+    addRow('txt', () => nt.text,   v => { nt.text   = v; nt.subText = v; });
+  }
+}
+
+function syncPanel(){
+  document.querySelectorAll('.lt-btn').forEach(b => b.classList.toggle('active', b.dataset.lt === lineType));
+  const ss = document.getElementById('sz-sector');
+  const sp = document.getElementById('sz-server');
+  ss.value = typo.sector;
+  sp.value = typo.server;
+  document.getElementById('val-sector').textContent = typo.sector + 'px';
+  document.getElementById('val-server').textContent = typo.server + 'px';
+  buildThemeSelect();
+}
+
+// ── Panel event bindings ──
+document.getElementById('panel-toggle').addEventListener('click', () => {
+  document.getElementById('panel').classList.toggle('collapsed');
+});
+
+document.getElementById('theme-select').addEventListener('change', e => {
+  themeId = e.target.value;
+  saveSettings(); buildThemeSelect(); render();
+});
+
+document.getElementById('btn-dup').addEventListener('click', () => {
+  const base = getTheme();
+  const copy = JSON.parse(JSON.stringify(base));
+  copy.id = 'c_' + Date.now();
+  copy.name = base.name + ' (cópia)';
+  copy.isBuiltIn = false;
+  customThemes.push(copy);
+  themeId = copy.id;
+  saveCustom(); saveSettings(); syncPanel(); render();
+});
+
+document.getElementById('btn-del').addEventListener('click', () => {
+  customThemes = customThemes.filter(t => t.id !== themeId);
+  themeId = 'dark';
+  saveCustom(); saveSettings(); syncPanel(); render();
+});
+
+document.querySelectorAll('.lt-btn').forEach(b => b.addEventListener('click', () => {
+  lineType = b.dataset.lt;
+  saveSettings(); syncPanel(); render();
+}));
+
+document.getElementById('sz-sector').addEventListener('input', e => {
+  typo.sector = parseFloat(e.target.value);
+  document.getElementById('val-sector').textContent = typo.sector + 'px';
+  for(const n of nodes) n.h = calcHeight(n);
+  saveSettings(); render();
+});
+
+document.getElementById('sz-server').addEventListener('input', e => {
+  typo.server = parseFloat(e.target.value);
+  document.getElementById('val-server').textContent = typo.server + 'px';
+  for(const n of nodes) n.h = calcHeight(n);
+  saveSettings(); render();
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  localStorage.removeItem('dtic_pos');
+  computeLayout(); fitToScreen(); render();
+});
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+function init(){
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  loadSettings();
+  loadCustom();
+  computeLayout();
+
+  if(!loadPositions()) fitToScreen();
+  else fitToScreen();  // always re-fit so nothing is off-screen
+
+  syncPanel();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
